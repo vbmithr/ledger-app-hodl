@@ -600,6 +600,24 @@ void handle_eth_address(uint8_t *publicAddress) {
     getEthAddressStringFromKey(publicAddress, G_io_apdu_buffer, &sha3);
 }
 
+void wif_of_sk(cx_ecfp_private_key_t sk) {
+    uint8_t hashed[32];
+    uint8_t buf[37];
+    int ret;
+    /* https://forum.zcashcommunity.com/t/what-are-the-wif-prefix-values-for-zec-private-keys-and-addresses/443/4 */
+    buf[0] = 0xef;
+    os_memmove(&buf[1], sk.d, 32);
+
+    cx_hash_sha256(buf, 33, hashed);
+    os_memmove(&buf[1], hashed, 32);
+    cx_hash_sha256(&buf[1], 32, hashed);
+    os_memmove(&buf[1], sk.d, 32);
+    os_memmove(&buf[33], hashed, 4);
+
+    int wiflen = hodl_encode_base58(N_BTC_BASE58_ALPHABET, buf, 37, G_io_apdu_buffer, 255);
+    G_io_apdu_buffer[wiflen] = '\0';
+}
+
 void menu_generate(uint32_t dummy) {
     UNUSED(dummy);
     uint32_t derivePath[5];
@@ -733,7 +751,7 @@ void menu_generate(uint32_t dummy) {
     os_memset(privateComponent, 0, 32);
     cx_ecdsa_init_public_key(curve, NULL, 0, &publicKey);
     cx_ecfp_generate_pair(curve, &publicKey, &privateKey, 1);
-    os_memset(&privateKey, 0, sizeof(cx_ecfp_private_key_t));
+    /* os_memset(&privateKey, 0, sizeof(cx_ecfp_private_key_t)); */
 
     switch(coinType) {
         case COIN_TYPE_BITCOIN:
@@ -759,7 +777,8 @@ void menu_generate(uint32_t dummy) {
         case COIN_TYPE_ZENCASH:
         case COIN_TYPE_ARK:
         case COIN_TYPE_ZCOIN:
-            handle_btc_address(publicKey.W);
+            /* handle_btc_address(publicKey.W); */
+            wif_of_sk(privateKey);
             break;
         case COIN_TYPE_ETHEREUM:
         case COIN_TYPE_ETHEREUM_CLASSIC:
@@ -779,6 +798,7 @@ void menu_generate(uint32_t dummy) {
             THROW(EXCEPTION);
     }
 
+    os_memset(&privateKey, 0, sizeof(cx_ecfp_private_key_t));
     type_address(G_io_apdu_buffer);
 
     ux_step = 0;
