@@ -73,7 +73,10 @@ enum coin_type_e {
 //    COIN_TYPE_NANO = 27,
 //    COIN_TYPE_NIMIQ = 28,
     COIN_TYPE_ZCOIN = 29,
-    COIN_TYPE_TRON = 30
+    COIN_TYPE_TRON = 30,
+    COIN_TYPE_TEZOS = 31,
+    COIN_TYPE_TEZOS_SECP256K1 = 32,
+    COIN_TYPE_TEZOS_P256 = 33
 
 };
 typedef enum coin_type_e coin_type_t;
@@ -621,6 +624,14 @@ void menu_generate(uint32_t dummy) {
 /*        case COIN_TYPE_NANO:
             curve = CX_CURVE_Ed25519;
             break;*/
+        case COIN_TYPE_TEZOS:
+            curve = CX_CURVE_Ed25519;
+            break;
+        case COIN_TYPE_TEZOS_P256:
+            curve = CX_CURVE_256R1;
+            break;
+        default:
+            break;
     }
     switch(coinType) {
         case COIN_TYPE_BITCOIN:
@@ -714,6 +725,11 @@ void menu_generate(uint32_t dummy) {
         case COIN_TYPE_TRON:
             derivePath[1] = 0x800000c3;
             break;
+        case COIN_TYPE_TEZOS:
+        case COIN_TYPE_TEZOS_SECP256K1:
+        case COIN_TYPE_TEZOS_P256:
+            derivePath[1] = 0x800006c1;
+            break;
     }
 
     derivePath[2] = 0x80000000 | coinAccount;
@@ -721,6 +737,12 @@ void menu_generate(uint32_t dummy) {
         case COIN_TYPE_STELLAR:
 //        case COIN_TYPE_NIMIQ:
             derivePathLength = 3;
+            break;
+        case COIN_TYPE_TEZOS:
+        case COIN_TYPE_TEZOS_SECP256K1:
+        case COIN_TYPE_TEZOS_P256:
+            derivePath[3] = coinIndex;
+            derivePathLength = 4;
             break;
         default:
             derivePath[3] = 0;
